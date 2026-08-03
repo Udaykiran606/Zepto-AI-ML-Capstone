@@ -1,0 +1,38 @@
+--- Executing Required SQL Queries & Validations ---
+
+[Query 1: SELECT/WHERE] -> Found 12 in-stock 5-star books.
+                                               title  price_gbp
+0                                A Light in the Attic      51.77
+1                            It's Only Too Late If...      13.77
+2  Setting Sights: Various Attempts to Ourselves ...      13.30
+
+[Query 2: ORDER BY & LIMIT] -> Top 5 most expensive books in INR:
+                                title  price_inr
+0                  The Perfect Choice    6285.69
+1  The Requiem Red                     5823.60
+2  The Black Maria                     5502.88
+3  Starving Hearts (sins of the 7)     1476.00
+4  Rip It Up and Start Again           3692.50
+
+[Query 3: DISTINCT] -> Unique ratings present in catalog:
+   rating
+0       5
+1       4
+2       3
+3       2
+4       1
+
+[Query 4: BETWEEN] -> Books priced between £20 and £40: 28 found.
+                         title  price_gbp
+0  Soumission                      50.10
+1  Private Paris                   29.71
+2  We Love You, Charlie Freeman    50.27
+
+[Query 5: JOIN] -> Joined books with categories total rows: 80
+                                title category_name  price_gbp  rating
+0                            Olivae         travel      23.88       5
+1               It's Only Too Late...       mystery      13.77       5
+2  Setting Sights: Various Attempts...  sequential      13.30       5
+
+--- Validating SQL JOIN with Pandas pd.merge() ---
+✅ Pandas pd.merge() output matches SQL JOIN output? True
