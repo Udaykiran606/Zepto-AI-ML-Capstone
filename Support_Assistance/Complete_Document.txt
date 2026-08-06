@@ -1,0 +1,202 @@
+Zepto-AI-ML-Capstone/
+
+1. Repository Directory Structure
+
+├── README.md                      # Root Master Documentation
+│
+├── data_pipeline/                 # Module 1: ETL & Relational Database
+│   ├── Data_Pipeline.py           # Scraping, Cleaning, SQLite Storage, Validation
+│   ├── catalog_pipeline.db        # Normalized 3NF SQLite Database
+│   └── scraped_books_cleaned.csv  # Cleaned Dataset CSV Backup
+│
+├── analysis/                      # Module 2: Machine Learning & Analytics
+│   ├── analytics.py               # Profiling, EDA, Classification, Tuning & Regression
+│   ├── titanic.csv                # Cleaned & Processed Dataset Artifact
+│   └── fitted_pipeline.joblib     # Serialized Scikit-Learn Model Pipeline
+│
+└── support_assistant/             # Module 3: Zepto Support Assistant (GenAI RAG)
+    ├── main.py                    # ChromaDB, LangGraph Agent, FastAPI Engine
+    ├── Dockerfile                 # Containerization Specification
+    ├── requirements.txt           # Python Dependencies
+    ├── README.md                  # Module-Specific Documentation
+    └── docs/                      # Corpus Storage Directory
+        ├── doc_01.txt             # Delivery Policy
+        ├── doc_02.txt             # Returns & Refunds
+        ├── doc_03.txt             # Membership Tiers
+        ├── doc_04.txt             # Order Tracking
+        ├── doc_05.txt             # Order Cancellation Policy
+        ├── doc_06.txt             # Damaged or Missing Items
+        ├── doc_07.txt             # Gift Cards
+        └── doc_08.txt             # Customer Support Hours
+
+
+
+2. Global Installation & Dependencies
+To set up and run all three modules locally, install the required dependencies:
+
+
+pip install pandas numpy requests beautifulsoup4 scikit-learn seaborn matplotlib joblib imbalanced-learn chromadb sentence-transformers langgraph fastapi uvicorn pydantic nest_asyncio
+🚀 3. How to Execute Each Module
+Module 1: Data Pipeline
+Extracts raw catalog data from books.toscrape.com, applies median imputation and currency enrichment, stores the normalized schema in SQLite, and cross-validates SQL JOIN queries against Pandas.
+
+
+python Data_Pipeline.py
+Module 2: Analytics & Machine Learning Pipeline
+Executes data profiling, defensible cleaning, univariate/bivariate EDA, trains three baseline classifiers, handles class imbalance via SMOTE, performs GridSearchCV hyperparameter tuning, fits a fare regression model, and serializes the final pipeline artifact.
+
+
+python analytics.py
+Module 3: Zepto Support Assistant (RAG & Agent Service)
+Initializes local ChromaDB embeddings (all-MiniLM-L6-v2), builds a 3-node LangGraph workflow with keyword-driven intent routing, and launches a FastAPI web service on port 7860.
+
+
+python main.py
+Running via Docker:
+
+docker build -t zepto-support-assistant .
+docker run -p 7860:7860 zepto-support-assistant
+🏛️ 4. Detailed Module Descriptions & Architecture
+Module 1 — Data Pipeline (data_pipeline/)
+Purpose: Automated Scraping, Cleaning, Database Normalization, and Query Validation.
+
+Pipeline Flow: Scrape → Clean → Convert → Store → Query → Validate.
+
+Key Components:
+
+Scraper: Navigates paginated categories using BeautifulSoup and requests.
+
+Cleaner: Handles special character encoding (£), strips raw text, converts ratings to integers (1–5), and imputes missing metrics using median values.
+
+Database: Normalizes raw data into 3rd Normal Form (3NF) relational tables (categories and books) with Primary Key / Foreign Key constraints in SQLite (catalog_pipeline.db).
+
+Validator: Verifies SQL JOIN queries against Pandas pd.merge() operations programmatically using .equals().
+
+Module 2 — Analytics & Machine Learning (analysis/)
+Purpose: Profiling, EDA, Binary Classification, Hyperparameter Tuning, and Regression.
+
+Pipeline Flow: Ingest → Clean → Univariate/Bivariate EDA → Stratified Split → Classifiers → SMOTE Experiment → GridSearchCV → Regression Side-Task → Serialization.
+
+Key Components:
+
+Cleaning Rules: Drops columns with >30% missingness (deck), applies grouped median imputation for 5%–30% missingness (age), and drops rows for <5% missingness (embarked).
+
+Classifiers Evaluated: Logistic Regression, Decision Tree Classifier, and Random Forest Classifier.
+
+Class Imbalance: Compares Baseline vs Class Weight Balanced vs SMOTE Oversampling (applied strictly to training folds to prevent data leakage).
+
+Hyperparameter Tuning: Fine-tunes Random Forest using 5-Fold Stratified GridSearchCV and evaluates Out-Of-Bag (OOB) score.
+
+Model Serialization: Exports the complete preprocessing and classification pipeline to analytics/fitted_pipeline.joblib.
+
+Model Evaluation Summary Table
+Task / Model	Accuracy	Precision	Recall	F1 Score	ROC AUC	MAE	RMSE	R 
+2
+ 
+Classification — Logistic Regression	0.8202	0.8000	0.7059	0.7500	0.8664	—	—	—
+Classification — Decision Tree	0.8146	0.7966	0.6912	0.7402	0.8360	—	—	—
+Classification — Default Random Forest	0.7640	0.7097	0.6471	0.6769	0.8294	—	—	—
+Classification — Tuned Random Forest	0.7978	0.7759	0.6618	0.7143	0.8448	—	—	—
+Regression — Multivariate Linear Regression	—	—	—	—	—	18.2851	41.2293	0.3629
+Module 3 — Zepto Support Assistant (support_assistant/)
+Purpose: Agentic Quick-Commerce Policy Assistant with Local Vector Search and Schema Enforcement.
+
+Pipeline Flow: Ingestion → Embedding → Intent Routing → Retrieval → Generation → Validation.
+
+Plaintext
+                  [ User Query ]
+                        │
+                        ▼
+             ┌──────────────────────┐
+             │   classify_intent    │
+             │  (Keyword Heuristic) │
+             └──────────┬───────────┘
+                        │
+         ┌──────────────┴──────────────┐
+         │                             │
+ (policy_question)             (general_question)
+         │                             │
+         ▼                             ▼
+┌──────────────────┐         ┌──────────────────┐
+│retrieve_and_answer│         │  direct_answer   │
+└────────┬─────────┘         └────────┬─────────┘
+         │                            │
+         │ (Vector Search)            │ (Fixed Canned Output)
+         ▼                            │
+┌──────────────────┐                  │
+│     ChromaDB     │                  │
+│ (all-MiniLM-L6)  │                  │
+└────────┬─────────┘                  │
+         │                            │
+         └──────────────┬─────────────┘
+                        │
+                        ▼
+             ┌──────────────────────┐
+             │  RAGResponseSchema   │
+             │ (Pydantic Output)    │
+             └──────────────────────┘
+Key Components:
+Ingestion & Embedding Stage (initialize_vector_store):
+Reads 8 Zepto policy text documents (doc_01–doc_08) and embeds them using the open-source sentence-transformers model (all-MiniLM-L6-v2) locally into ChromaDB (zepto_policy_corpus).
+
+Intent Classification Stage (classify_intent_node):
+Uses a keyword heuristic router (delivery, return, refund, membership, tracking, cancel, gift card, support hours) to classify incoming queries into policy_question or general_question without making external LLM calls.
+
+Retrieval & Answer Generation Stage:
+
+retrieve_and_answer_node: Queries ChromaDB for top-3 matching chunks using cosine similarity. In default mock mode (MOCK_LLM=1), returns a deterministic answer: f"Based on the retrieved context: {top_chunk_snippet}". In real mode (MOCK_LLM=0), formats the prompt using a structured template (Role, Context, Task, Format, Length, Negative Constraint, Few-Shot Example) and invokes the model with retry logic.
+
+direct_answer_node: Handles general non-policy queries by returning a fixed canned string.
+
+Validation Stage (RAGResponseSchema):
+Enforces response formatting via Pydantic (answer, sources, confidence).
+
+🎯 5. Design Decisions & Key Assumptions
+Module 1: Data Pipeline
+Encoding & Politeness: Enforces utf-8 encoding to prevent currency symbol glitches (£) and introduces time.sleep(0.3) delays between requests.
+
+Database Normalization: Decouples categories into a separate table linked via category_id Foreign Key to enforce 3NF standards.
+
+Imputation Strategy: Uses median imputation for missing price/rating values while dropping rows missing critical identifiers (title).
+
+Module 2: Analytics & ML Pipeline
+Data Leakage Prevention: Preprocessing transformers (SimpleImputer, StandardScaler, OneHotEncoder) are fitted strictly on training data folds (X_train). SMOTE oversampling is applied exclusively to training data.
+
+Threshold-Based Cleaning: Explicitly drops columns exceeding 30% missingness (deck), imputes columns with 5%–30% missingness (age), and drops rows for columns below 5% missingness (embarked).
+
+Module 3: Zepto Support Assistant
+Zero API Dependency: Uses open-source sentence-transformers (all-MiniLM-L6-v2) and local ChromaDB storage, ensuring the system runs 100% offline under the graded baseline (MOCK_LLM=1).
+
+Deterministic Validation: Pydantic output schema validation is enforced across both mock and real execution branches.
+
+Containerization: The Dockerfile packages all dependencies and models, exposing port 7860 for deployment on local Docker engines or Hugging Face Spaces.
+
+📊 6. Sample Recorded API Outputs (Module 3 Baseline)
+Policy Query Output (retrieve_and_answer Node)
+Endpoint: POST /ask
+
+Request: {"query": "What is the delivery fee for orders below INR 149?"}
+
+Response:
+
+JSON
+{
+  "answer": "Based on the retrieved context: Zepto delivers grocery and household essentials to serviceable pin codes within 10 to 30 minutes of order confirmation, depending on the customer's delivery zone and current order volume. Standard delivery is free on orders over INR 149; orders below this threshold incur a flat INR 25 delivery fee. Priority delivery, which reserves the next available rider slot, is available at checkout for an additional INR 15. Zepto does not currently deliver to addresses outside its listed serviceable pin codes.",
+  "sources": [
+    "doc_01"
+  ],
+  "confidence": 1.0
+}
+General Query Output (direct_answer Node)
+Endpoint: POST /ask
+
+Request: {"query": "What is the distance between the Earth and the Moon?"}
+
+Response:
+
+JSON
+{
+  "answer": "I can only answer questions about Zepto policies right now.",
+  "sources": [],
+  "confidence": 1.0
+}
